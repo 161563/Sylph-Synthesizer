@@ -2,6 +2,7 @@
 
 #define _USE_MATH_DEFINES
 #include <math.h>
+#include <string>
 #include <vector>
 #include <algorithm>
 #include "Music.h"
