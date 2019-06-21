@@ -1,0 +1,4 @@
+2
+Debug\Synth.exe
+test2
+file test2 not found
