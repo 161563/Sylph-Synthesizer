@@ -2,9 +2,9 @@
 
 #define _USE_MATH_DEFINES
 #include <math.h>
-#include <string>
 #include <vector>
 #include <algorithm>
+#include <string>
 #include "Music.h"
 #include "WaveTables.h"
 

@@ -28,7 +28,7 @@ public enum class WAVE_TYPE {
 };
 
 const int MAGIC_IDENT = 0xacedfa;
-const float VERSION = 1.20001;
+const float VERSION = 1.10001;
 
 double translateNote(NOTE note);
 
