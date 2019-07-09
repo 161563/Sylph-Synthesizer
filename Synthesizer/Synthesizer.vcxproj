@@ -100,7 +100,7 @@
       <CLRUnmanagedCodeCheck>true</CLRUnmanagedCodeCheck>
     </Link>
     <PostBuildEvent>
-      <Command>xcopy /e /v "$(SolutionDir)deps\dlls\$(Platform)" "$(OutputPath)"</Command>
+      <Command>xcopy /e /v /l /y "$(SolutionDir)deps\dlls\$(Platform)" "$(OutputPath)"</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -118,7 +118,7 @@
       <CLRUnmanagedCodeCheck>true</CLRUnmanagedCodeCheck>
     </Link>
     <PostBuildEvent>
-      <Command>xcopy /e /v "$(SolutionDir)deps\dlls\$(Platform)" "$(OutputPath)"</Command>
+      <Command>xcopy /e /v /l /y "$(SolutionDir)deps\dlls\$(Platform)" "$(OutputPath)"</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -134,7 +134,7 @@
       <AdditionalLibraryDirectories>$(SolutionDir)$(Configuration);$(SolutionDir)deps\libs\x32\lib;$(SolutionDir)deps\libs\Win32;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
     <PostBuildEvent>
-      <Command>xcopy /e /v "$(SolutionDir)deps\dlls\$(Platform)" "$(OutputPath)"</Command>
+      <Command>xcopy /e /v /l /y "$(SolutionDir)deps\dlls\$(Platform)" "$(OutputPath)"</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -150,7 +150,7 @@
       <AdditionalLibraryDirectories>$(SolutionDir)x64\$(Configuration);$(SolutionDir)deps\libs\x64;$(SolutionDir)deps\libs\Win64</AdditionalLibraryDirectories>
     </Link>
     <PostBuildEvent>
-      <Command>xcopy /e /v "$(SolutionDir)deps\dlls\$(Platform)" "$(OutputPath)"</Command>
+      <Command>xcopy /e /v /l /y "$(SolutionDir)deps\dlls\$(Platform)" "$(OutputPath)"</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
@@ -170,6 +170,11 @@
     <ClCompile Include="Note.cpp" />
     <ClCompile Include="Song.cpp" />
     <ClCompile Include="TransposeMeasure.cpp" />
+    <ClCompile Include="Utility.cpp" />
+    <ClCompile Include="VulkanInstance.cpp" />
+    <ClCompile Include="VulkanLogicalDevice.cpp" />
+    <ClCompile Include="VulkanPhysicalDevice.cpp" />
+    <ClCompile Include="VulkanRenderer.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="AudioPlayer.h" />
@@ -189,6 +194,11 @@
     <ClInclude Include="TransposeMeasure.h">
       <FileType>CppForm</FileType>
     </ClInclude>
+    <ClInclude Include="Utility.h" />
+    <ClInclude Include="VulkanInstance.h" />
+    <ClInclude Include="VulkanLogicalDevice.h" />
+    <ClInclude Include="VulkanPhysicalDevice.h" />
+    <ClInclude Include="VulkanRenderer.h" />
     <ClInclude Include="WaveTables.h" />
   </ItemGroup>
   <ItemGroup>

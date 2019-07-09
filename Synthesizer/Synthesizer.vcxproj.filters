@@ -13,6 +13,36 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
+    <Filter Include="Header Files\renderer">
+      <UniqueIdentifier>{40ed4fd1-dd0b-4b8d-8d3c-65992b578160}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\renderer\vulkan">
+      <UniqueIdentifier>{df5088ef-2adf-434b-96d3-beac7e5f19a1}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\renderer">
+      <UniqueIdentifier>{529ca1dc-9959-4c19-b2db-94840c2b7123}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\renderer\vulkan">
+      <UniqueIdentifier>{8a5d8911-d1fb-4074-8e72-46556084f970}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\audio">
+      <UniqueIdentifier>{4f6d7f90-ab89-45d4-b6c1-c1356741f141}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\audio">
+      <UniqueIdentifier>{c7fc72f0-5969-470d-9df4-6a8eb818108b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\renderer\vulkan\utility">
+      <UniqueIdentifier>{8f5861b8-2bf9-47c1-85fc-bf9260a5a22c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\renderer\vulkan\utility">
+      <UniqueIdentifier>{0ceb6228-4927-44db-9744-113227ba804d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\util">
+      <UniqueIdentifier>{6b049ada-fefc-4198-b8dd-2a5d3551c095}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\util">
+      <UniqueIdentifier>{7c55fe33-f94f-4bd1-b658-6eeeacf70780}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="MainScreen.cpp">
@@ -27,20 +57,35 @@
     <ClCompile Include="CopyMeasures.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="VulkanRenderer.cpp">
+      <Filter>Source Files\renderer\vulkan</Filter>
+    </ClCompile>
     <ClCompile Include="AudioPlayer.cpp">
-      <Filter>Source Files</Filter>
+      <Filter>Source Files\audio</Filter>
     </ClCompile>
     <ClCompile Include="Instrument.cpp">
-      <Filter>Source Files</Filter>
+      <Filter>Source Files\audio</Filter>
     </ClCompile>
     <ClCompile Include="Music.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Note.cpp">
-      <Filter>Source Files</Filter>
+      <Filter>Source Files\audio</Filter>
     </ClCompile>
     <ClCompile Include="Song.cpp">
-      <Filter>Source Files</Filter>
+      <Filter>Source Files\audio</Filter>
+    </ClCompile>
+    <ClCompile Include="Note.cpp">
+      <Filter>Source Files\audio</Filter>
+    </ClCompile>
+    <ClCompile Include="VulkanInstance.cpp">
+      <Filter>Source Files\renderer\vulkan\utility</Filter>
+    </ClCompile>
+    <ClCompile Include="Utility.cpp">
+      <Filter>Source Files\util</Filter>
+    </ClCompile>
+    <ClCompile Include="VulkanPhysicalDevice.cpp">
+      <Filter>Source Files\renderer\vulkan\utility</Filter>
+    </ClCompile>
+    <ClCompile Include="VulkanLogicalDevice.cpp">
+      <Filter>Source Files\renderer\vulkan\utility</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -56,23 +101,38 @@
     <ClInclude Include="TransposeMeasure.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="AudioPlayer.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Instrument.h">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="VulkanRenderer.h">
+      <Filter>Header Files\renderer\vulkan</Filter>
     </ClInclude>
     <ClInclude Include="Music.h">
-      <Filter>Header Files</Filter>
+      <Filter>Header Files\audio</Filter>
     </ClInclude>
     <ClInclude Include="Note.h">
-      <Filter>Header Files</Filter>
+      <Filter>Header Files\audio</Filter>
     </ClInclude>
     <ClInclude Include="Song.h">
-      <Filter>Header Files</Filter>
+      <Filter>Header Files\audio</Filter>
+    </ClInclude>
+    <ClInclude Include="Instrument.h">
+      <Filter>Header Files\audio</Filter>
+    </ClInclude>
+    <ClInclude Include="AudioPlayer.h">
+      <Filter>Header Files\audio</Filter>
     </ClInclude>
     <ClInclude Include="WaveTables.h">
-      <Filter>Header Files</Filter>
+      <Filter>Header Files\audio</Filter>
+    </ClInclude>
+    <ClInclude Include="VulkanInstance.h">
+      <Filter>Header Files\renderer\vulkan\utility</Filter>
+    </ClInclude>
+    <ClInclude Include="Utility.h">
+      <Filter>Header Files\util</Filter>
+    </ClInclude>
+    <ClInclude Include="VulkanPhysicalDevice.h">
+      <Filter>Header Files\renderer\vulkan\utility</Filter>
+    </ClInclude>
+    <ClInclude Include="VulkanLogicalDevice.h">
+      <Filter>Header Files\renderer\vulkan\utility</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

@@ -7,6 +7,7 @@
 #include "EquilizeAmplitude.h"
 #include "TransposeMeasure.h"
 #include "AudioPlayer.h"
+#include "VulkanRenderer.h"
 
 #include <msclr\marshal_cppstd.h>
 #include <stack>
@@ -29,6 +30,7 @@ namespace Synthesizer {
 		Song* song;
 		Note* selectedNote;
 		AudioPlayer* audioPlayer;
+		renderer::vulkan::VulkanRenderer* renderer;
 
 		ThreadManager^ threadManager;
 
@@ -54,6 +56,8 @@ namespace Synthesizer {
 
 	public:
 		int measure;
+	private: System::ComponentModel::BackgroundWorker^ VulkanRenderUpdate;
+	public:
 		String^ exportWavFileName;
 
 		void setSong(Song* song) { this->song = song;
@@ -65,6 +69,8 @@ namespace Synthesizer {
 		{
 			measure = 1;
 			InitializeComponent();
+
+			renderer = new renderer::vulkan::VulkanRenderer(VulkanRenderView);
 			
 		}
 	private: System::Windows::Forms::TextBox^  SampleRateBox;
@@ -87,7 +93,8 @@ namespace Synthesizer {
 	private: System::Windows::Forms::Button^  button1;
 	private: System::Windows::Forms::Label^  label7;
 	private: System::Windows::Forms::TextBox^  AmplitudeBox;
-	private: System::Windows::Forms::Panel^  panel1;
+	private: System::Windows::Forms::Panel^ VulkanRenderView;
+
 
 
 
@@ -106,6 +113,8 @@ namespace Synthesizer {
 					threadManager->CloseAll();
 					delete song;
 				}
+				delete renderer;
+				delete audioPlayer;
 				delete components;
 			}
 		}
@@ -134,7 +143,6 @@ namespace Synthesizer {
 							song = new Song();
 							MeasureBox->Text = L"0";
 							measure = 0;
-							panel1->Refresh();
 							delete dialog;
 						}
 						else {
@@ -148,7 +156,6 @@ namespace Synthesizer {
 					song = new Song();
 					MeasureBox->Text = L"1";
 					measure = 1;
-					panel1->Refresh();
 				}
 				else {
 					return false;
@@ -162,7 +169,6 @@ namespace Synthesizer {
 				threadManager = gcnew ThreadManager();
 				MeasureBox->Text = L"1";
 				measure = 1;
-				panel1->Refresh();
 			}
 			return true;
 		};
@@ -229,7 +235,7 @@ namespace Synthesizer {
 			this->button1 = (gcnew System::Windows::Forms::Button());
 			this->label7 = (gcnew System::Windows::Forms::Label());
 			this->AmplitudeBox = (gcnew System::Windows::Forms::TextBox());
-			this->panel1 = (gcnew System::Windows::Forms::Panel());
+			this->VulkanRenderView = (gcnew System::Windows::Forms::Panel());
 			this->deleteNote = (gcnew System::Windows::Forms::Button());
 			this->editNote = (gcnew System::Windows::Forms::Button());
 			this->IncreaseOffsetCheckBox = (gcnew System::Windows::Forms::CheckBox());
@@ -242,6 +248,7 @@ namespace Synthesizer {
 			this->label10 = (gcnew System::Windows::Forms::Label());
 			this->ExtensionIndicator = (gcnew System::Windows::Forms::Label());
 			this->ExportWavWorker = (gcnew System::ComponentModel::BackgroundWorker());
+			this->VulkanRenderUpdate = (gcnew System::ComponentModel::BackgroundWorker());
 			this->menuStrip1->SuspendLayout();
 			(cli::safe_cast<System::ComponentModel::ISupportInitialize^>(this->VolumeBar))->BeginInit();
 			this->SuspendLayout();
@@ -555,17 +562,16 @@ namespace Synthesizer {
 			this->AmplitudeBox->TabIndex = 20;
 			this->AmplitudeBox->Text = L"10000";
 			// 
-			// panel1
+			// VulkanRenderView
 			// 
-			this->panel1->Anchor = static_cast<System::Windows::Forms::AnchorStyles>((((System::Windows::Forms::AnchorStyles::Top | System::Windows::Forms::AnchorStyles::Bottom)
+			this->VulkanRenderView->Anchor = static_cast<System::Windows::Forms::AnchorStyles>((((System::Windows::Forms::AnchorStyles::Top | System::Windows::Forms::AnchorStyles::Bottom)
 				| System::Windows::Forms::AnchorStyles::Left)
 				| System::Windows::Forms::AnchorStyles::Right));
-			this->panel1->Location = System::Drawing::Point(372, 28);
-			this->panel1->Name = L"panel1";
-			this->panel1->Size = System::Drawing::Size(801, 541);
-			this->panel1->TabIndex = 21;
-			this->panel1->Paint += gcnew System::Windows::Forms::PaintEventHandler(this, &MainScreen::Panel_OnPaint);
-			this->panel1->MouseClick += gcnew System::Windows::Forms::MouseEventHandler(this, &MainScreen::Panel_OnClick);
+			this->VulkanRenderView->Location = System::Drawing::Point(372, 28);
+			this->VulkanRenderView->Name = L"VulkanRenderView";
+			this->VulkanRenderView->Size = System::Drawing::Size(801, 541);
+			this->VulkanRenderView->TabIndex = 21;
+			this->VulkanRenderView->MouseClick += gcnew System::Windows::Forms::MouseEventHandler(this, &MainScreen::Panel_OnClick);
 			// 
 			// deleteNote
 			// 
@@ -686,6 +692,10 @@ namespace Synthesizer {
 			this->ExportWavWorker->ProgressChanged += gcnew System::ComponentModel::ProgressChangedEventHandler(this, &MainScreen::OnProgressChange);
 			this->ExportWavWorker->RunWorkerCompleted += gcnew System::ComponentModel::RunWorkerCompletedEventHandler(this, &MainScreen::OnExportComplete);
 			// 
+			// VulkanRenderUpdate
+			// 
+			this->VulkanRenderUpdate->DoWork += gcnew System::ComponentModel::DoWorkEventHandler(this, &MainScreen::VulkanUpdate);
+			// 
 			// MainScreen
 			// 
 			this->AutoScaleDimensions = System::Drawing::SizeF(6, 13);
@@ -702,7 +712,7 @@ namespace Synthesizer {
 			this->Controls->Add(this->IncreaseOffsetCheckBox);
 			this->Controls->Add(this->editNote);
 			this->Controls->Add(this->deleteNote);
-			this->Controls->Add(this->panel1);
+			this->Controls->Add(this->VulkanRenderView);
 			this->Controls->Add(this->AmplitudeBox);
 			this->Controls->Add(this->label7);
 			this->Controls->Add(this->button1);
@@ -761,10 +771,7 @@ namespace Synthesizer {
 			}
 
 			threadManager = gcnew ThreadManager();
-
-			panel1->Refresh();
 		}
-		panel1->Refresh();
 	}
 private: System::Void Save_OnClick(System::Object^  sender, System::EventArgs^  e) {
 	if (song) {
@@ -857,14 +864,11 @@ private: System::Void Open_OnClick(System::Object^  sender, System::EventArgs^  
 			MeasureLengthBox->Text = System::Convert::ToString(song->getMeasureLength());
 			MeasureBox->Text = L"1";
 			measure = 1;
-			panel1->Refresh();
-
 			//threadManager->CloseAll();
 
 			threadManager = gcnew ThreadManager();
 		}
 	}
-	panel1->Refresh();
 }
 private: System::Void ExportWav_OnClick(System::Object^  sender, System::EventArgs^  e) {
 	if (song) {
@@ -916,8 +920,6 @@ private: System::Void onLoad(System::Object^  sender, System::EventArgs^  e) {
 		}
 	}
 }
-private: System::Void TestNote(System::Object^  sender, System::EventArgs^  e) {
-}
 private: System::Void AddNote_OnClick(System::Object^  sender, System::EventArgs^  e) {
 	NOTE note = (NOTE)NoteComboBox->SelectedItem;
 	WAVE_TYPE wave = (WAVE_TYPE)NoteTypeComboBox->SelectedItem;
@@ -956,7 +958,6 @@ private: System::Void AddNote_OnClick(System::Object^  sender, System::EventArgs
 	}
 	instrument->addNote(amplitude, measure,
 		measureLength, offset, length, note);
-	panel1->Refresh();
 	if (IncreaseOffsetCheckBox->Checked) {
 		OffsetBox->Text = System::Convert::ToString(length + offset);
 	}
@@ -967,7 +968,6 @@ private: System::Void MeasureGoTo_OnClick(System::Object^  sender, System::Event
 		measure = 1;
 		MeasureBox->Text = System::Convert::ToString(1);
 	}
-	panel1->Refresh();
 }
 private: System::Void MeasurePrev_OnClick(System::Object^  sender, System::EventArgs^  e) {
 	int measure = int::Parse(MeasureBox->Text);
@@ -975,97 +975,98 @@ private: System::Void MeasurePrev_OnClick(System::Object^  sender, System::Event
 	MeasureBox->Text = System::Convert::ToString(measure);
 	MeasureGoTo_OnClick(sender, e);
 }
-private: System::Void MeasureNext_OnClick(System::Object^  sender, System::EventArgs^  e) {
-	int measure = int::Parse(MeasureBox->Text);
-	measure++;
-	MeasureBox->Text = System::Convert::ToString(measure);
-	MeasureGoTo_OnClick(sender, e);
-}
-	private: System::Void Panel_OnPaint(System::Object^  sender, System::Windows::Forms::PaintEventArgs^  e) {
-		//MessageBox::Show(L"painting");
-		std::vector<Instrument*> instruments = song->getInstruments();
-		Graphics^ g = e->Graphics;
-		for (int i = 0; i <= (int)NOTE::B8; i++) {
-			g->DrawLine(System::Drawing::Pens::Black, panel1->Width / ((float)NOTE::B8 + 1)*i,
-				(float)0, panel1->Width / ((float)NOTE::B8 + 1)*i, (float)panel1->Height);
-		}
-		for (int i = 0; i < (int)NOTE::B8; i += (int)NOTE::C1) {
-			System::Drawing::Brush^ brush = System::Drawing::Brushes::Black;
-			g->FillRectangle(brush, (float)(i + 1)*panel1->Width / ((float)NOTE::B8 + 1),
-				0.f,
-				panel1->Width / ((float)NOTE::B8 + 1),
-				(float)panel1->Height);
-			g->FillRectangle(brush, (float)(i + 3)*panel1->Width / ((float)NOTE::B8 + 1),
-				0.f,
-				panel1->Width / ((float)NOTE::B8 + 1),
-				(float)panel1->Height);
-			g->FillRectangle(brush, (float)(i + 6)*panel1->Width / ((float)NOTE::B8 + 1),
-				0.f,
-				panel1->Width / ((float)NOTE::B8 + 1),
-				(float)panel1->Height);
-			g->FillRectangle(brush, (float)(i + 8)*panel1->Width / ((float)NOTE::B8 + 1),
-				0.f,
-				panel1->Width / ((float)NOTE::B8 + 1),
-				(float)panel1->Height);
-			g->FillRectangle(brush, (float)(i + 10)*panel1->Width / ((float)NOTE::B8 + 1),
-				0.f,
-				panel1->Width / ((float)NOTE::B8 + 1),
-				(float)panel1->Height);
-		}
-		g->DrawLine(System::Drawing::Pens::Black, (float)panel1->Width - 1,
-			(float)0, (float)panel1->Width - 1, (float)panel1->Height);
-
-		for (int i = 0; i < int::Parse(MeasureLengthBox->Text) + 1; i++) {
-			g->DrawLine(System::Drawing::Pens::DarkBlue, 0, panel1->Height / int::Parse(MeasureLengthBox->Text) * i,
-				panel1->Width, panel1->Height / int::Parse(MeasureLengthBox->Text) * i);
-		}
-		for (int i = 0; i < instruments.size(); ++i) {
-			std::vector<Note*> notes = instruments[i]->getNotes();
-			for each (Note* note in notes)
-			{
-				if (note->getMeasure() == measure) {
-					System::Drawing::Brush^ brush;
-					brush = System::Drawing::Brushes::GreenYellow;
-					if (instruments[i]->getWaveType() == WAVE_TYPE::SINE)
-						brush = System::Drawing::Brushes::GreenYellow;
-					if (instruments[i]->getWaveType() == WAVE_TYPE::SAW)
-						brush = System::Drawing::Brushes::CadetBlue;
-					if (instruments[i]->getWaveType() == WAVE_TYPE::TRIANGLE)
-						brush = System::Drawing::Brushes::Red;
-					if (instruments[i]->getWaveType() == WAVE_TYPE::SQUARE)
-						brush = System::Drawing::Brushes::Purple;
-					if (instruments[i]->getWaveType() == WAVE_TYPE::DRUM_KICK) {
-						brush = System::Drawing::Brushes::Cyan;
-					}
-					if (instruments[i]->getWaveType() == WAVE_TYPE::DRUM_SNARE) {
-						brush = System::Drawing::Brushes::BlueViolet;
-					}
-					if (instruments[i]->getWaveType() == WAVE_TYPE::REESE_BASS) {
-						brush = System::Drawing::Brushes::Orange;
-					}
-					if (instruments[i]->getWaveType() == WAVE_TYPE::THEREMIN) {
-						brush = System::Drawing::Brushes::DarkGreen;
-					}
-					if (instruments[i]->getWaveType() == WAVE_TYPE::CELLO) {
-						brush = System::Drawing::Brushes::DarkGoldenrod;
-					}
-					g->FillRectangle(brush, (float)note->getNote()*panel1->Width / ((float)NOTE::B8 + 1),
-						panel1->Height - panel1->Height / note->getMeasureLength()*(note->getOffset() + note->getLength()),
-						panel1->Width / ((float)NOTE::B8 + 1),
-						panel1->Height / note->getMeasureLength()*note->getLength());
-					System::Drawing::Pen^ pen = System::Drawing::Pens::DarkBlue;
-					if (note->isSelected()) {
-						pen = System::Drawing::Pens::DarkRed;
-					}
-					g->DrawRectangle(pen, (float)note->getNote()*panel1->Width / ((float)NOTE::B8 + 1),
-						panel1->Height - panel1->Height / note->getMeasureLength()*(note->getOffset() + note->getLength()),
-						panel1->Width / ((float)NOTE::B8 + 1),
-						panel1->Height / note->getMeasureLength()*note->getLength());
-
-				}
-			}
-		}
+	private: System::Void MeasureNext_OnClick(System::Object^ sender, System::EventArgs^ e) {
+		int measure = int::Parse(MeasureBox->Text);
+		measure++;
+		MeasureBox->Text = System::Convert::ToString(measure);
+		MeasureGoTo_OnClick(sender, e);
 	}
+
+//	private: System::Void Panel_OnPaint(System::Object^  sender, System::Windows::Forms::PaintEventArgs^  e) {
+//		//MessageBox::Show(L"painting");
+//		std::vector<Instrument*> instruments = song->getInstruments();
+//		Graphics^ g = e->Graphics;
+//		for (int i = 0; i <= (int)NOTE::B8; i++) {
+//			g->DrawLine(System::Drawing::Pens::Black, panel1->Width / ((float)NOTE::B8 + 1)*i,
+//				(float)0, panel1->Width / ((float)NOTE::B8 + 1)*i, (float)panel1->Height);
+//		}
+//		for (int i = 0; i < (int)NOTE::B8; i += (int)NOTE::C1) {
+//			System::Drawing::Brush^ brush = System::Drawing::Brushes::Black;
+//			g->FillRectangle(brush, (float)(i + 1)*panel1->Width / ((float)NOTE::B8 + 1),
+//				0.f,
+//				panel1->Width / ((float)NOTE::B8 + 1),
+//				(float)panel1->Height);
+//			g->FillRectangle(brush, (float)(i + 3)*panel1->Width / ((float)NOTE::B8 + 1),
+//				0.f,
+//				panel1->Width / ((float)NOTE::B8 + 1),
+//				(float)panel1->Height);
+//			g->FillRectangle(brush, (float)(i + 6)*panel1->Width / ((float)NOTE::B8 + 1),
+//				0.f,
+//				panel1->Width / ((float)NOTE::B8 + 1),
+//				(float)panel1->Height);
+//			g->FillRectangle(brush, (float)(i + 8)*panel1->Width / ((float)NOTE::B8 + 1),
+//				0.f,
+//				panel1->Width / ((float)NOTE::B8 + 1),
+//				(float)panel1->Height);
+//			g->FillRectangle(brush, (float)(i + 10)*panel1->Width / ((float)NOTE::B8 + 1),
+//				0.f,
+//				panel1->Width / ((float)NOTE::B8 + 1),
+//				(float)panel1->Height);
+//		}
+//		g->DrawLine(System::Drawing::Pens::Black, (float)panel1->Width - 1,
+//			(float)0, (float)panel1->Width - 1, (float)panel1->Height);
+//
+//		for (int i = 0; i < int::Parse(MeasureLengthBox->Text) + 1; i++) {
+//			g->DrawLine(System::Drawing::Pens::DarkBlue, 0, panel1->Height / int::Parse(MeasureLengthBox->Text) * i,
+//				panel1->Width, panel1->Height / int::Parse(MeasureLengthBox->Text) * i);
+//		}
+//		for (int i = 0; i < instruments.size(); ++i) {
+//			std::vector<Note*> notes = instruments[i]->getNotes();
+//			for each (Note* note in notes)
+//			{
+//				if (note->getMeasure() == measure) {
+//					System::Drawing::Brush^ brush;
+//					brush = System::Drawing::Brushes::GreenYellow;
+//					if (instruments[i]->getWaveType() == WAVE_TYPE::SINE)
+//						brush = System::Drawing::Brushes::GreenYellow;
+//					if (instruments[i]->getWaveType() == WAVE_TYPE::SAW)
+//						brush = System::Drawing::Brushes::CadetBlue;
+//					if (instruments[i]->getWaveType() == WAVE_TYPE::TRIANGLE)
+//						brush = System::Drawing::Brushes::Red;
+//					if (instruments[i]->getWaveType() == WAVE_TYPE::SQUARE)
+//						brush = System::Drawing::Brushes::Purple;
+//					if (instruments[i]->getWaveType() == WAVE_TYPE::DRUM_KICK) {
+//						brush = System::Drawing::Brushes::Cyan;
+//					}
+//					if (instruments[i]->getWaveType() == WAVE_TYPE::DRUM_SNARE) {
+//						brush = System::Drawing::Brushes::BlueViolet;
+//					}
+//					if (instruments[i]->getWaveType() == WAVE_TYPE::REESE_BASS) {
+//						brush = System::Drawing::Brushes::Orange;
+//					}
+//					if (instruments[i]->getWaveType() == WAVE_TYPE::THEREMIN) {
+//						brush = System::Drawing::Brushes::DarkGreen;
+//					}
+//					if (instruments[i]->getWaveType() == WAVE_TYPE::CELLO) {
+//						brush = System::Drawing::Brushes::DarkGoldenrod;
+//					}
+//					g->FillRectangle(brush, (float)note->getNote()*panel1->Width / ((float)NOTE::B8 + 1),
+//						panel1->Height - panel1->Height / note->getMeasureLength()*(note->getOffset() + note->getLength()),
+//						panel1->Width / ((float)NOTE::B8 + 1),
+//						panel1->Height / note->getMeasureLength()*note->getLength());
+//					System::Drawing::Pen^ pen = System::Drawing::Pens::DarkBlue;
+//					if (note->isSelected()) {
+//						pen = System::Drawing::Pens::DarkRed;
+//					}
+//					g->DrawRectangle(pen, (float)note->getNote()*panel1->Width / ((float)NOTE::B8 + 1),
+//						panel1->Height - panel1->Height / note->getMeasureLength()*(note->getOffset() + note->getLength()),
+//						panel1->Width / ((float)NOTE::B8 + 1),
+//						panel1->Height / note->getMeasureLength()*note->getLength());
+//
+//				}
+//			}
+//		}
+//	}
 private: System::Void Panel_OnClick(System::Object^  sender, System::Windows::Forms::MouseEventArgs^  e) {
 	if (selectedNote != nullptr) {
 		selectedNote->select(false);
@@ -1074,8 +1075,8 @@ private: System::Void Panel_OnClick(System::Object^  sender, System::Windows::Fo
 		editNote->Enabled = false;
 		ExtensionIndicator->Visible = false;
 	}
-	NOTE noteValue = (NOTE)(int)(e->X*((float)NOTE::B8 + 1) / panel1->Width);
-	float time = (e->Y - (float)panel1->Height) / (-(float)panel1->Height / float::Parse(MeasureLengthBox->Text));
+	NOTE noteValue = (NOTE)(int)(e->X*((float)NOTE::B8 + 1) / VulkanRenderView->Width);
+	float time = (e->Y - (float)VulkanRenderView->Height) / (-(float)VulkanRenderView->Height / float::Parse(MeasureLengthBox->Text));
 	std::vector<Instrument*> instruments = song->getInstruments();
 	for (int i = 0; i < instruments.size(); ++i) {
 		selectedNote = instruments[i]->getNote(noteValue, measure, time);
@@ -1093,13 +1094,11 @@ private: System::Void Panel_OnClick(System::Object^  sender, System::Windows::Fo
 			break;
 		}
 	}
-	panel1->Refresh();
 }
 private: System::Void deleteNoteOnClick(System::Object^  sender, System::EventArgs^  e) {
 	if (selectedNote != nullptr) {
 		selectedNote->getInstrument()->removeNote(selectedNote);
 		selectedNote = nullptr;
-		panel1->Refresh();
 	}
 }
 private: System::Void editNoteOnClick(System::Object^  sender, System::EventArgs^  e) {
@@ -1124,7 +1123,6 @@ private: System::Void editNoteOnClick(System::Object^  sender, System::EventArgs
 			selectedNote = newInstrument->addNote(int::Parse(AmplitudeBox->Text), int::Parse(MeasureBox->Text),
 				float::Parse(MeasureLengthBox->Text), float::Parse(OffsetBox->Text), float::Parse(LengthBox->Text), note);
 		}
-		panel1->Refresh();
 	}
 }
 private: System::Void onClose(System::Object^  sender, System::Windows::Forms::FormClosingEventArgs^  e) {
@@ -1133,6 +1131,12 @@ private: System::Void onClose(System::Object^  sender, System::Windows::Forms::F
 	}
 	else {
 		song->stopPlay(threadManager);
+		if (song) {
+			threadManager->CloseAll();
+			delete song;
+		}
+		delete renderer;
+		delete audioPlayer;
 	}
 }
 private: System::Void CopyMeasures_OnClick(System::Object^  sender, System::EventArgs^  e) {
@@ -1179,8 +1183,7 @@ private: System::Void CopyMeasures_OnClick(System::Object^  sender, System::Even
 
 						}
 					}
-				}
-				panel1->Refresh();
+				}\
 			}
 			else {
 				MessageBox::Show(L"Till must be larger then from");
@@ -1274,7 +1277,6 @@ private: System::Void TransposeMeasure_onClick(System::Object^  sender, System::
 						}
 					}
 				}
-				panel1->Refresh();
 			}
 			else {
 				MessageBox::Show(L"End measure must be larger than Start measure");
@@ -1287,7 +1289,7 @@ private: System::Void TransposeMeasure_onClick(System::Object^  sender, System::
 	delete TransposeDialog;
 }
 private: System::Void ResizeEnd(System::Object^  sender, System::EventArgs^  e) {
-	panel1->Invalidate();
+	//panel1->Invalidate();
 }
 private: System::Void VolumeChanged(System::Object^  sender, System::EventArgs^  e) {
 	float volume = map((float)this->VolumeBar->Value,
@@ -1342,6 +1344,9 @@ private: System::Void OnProgressChange(System::Object^  sender, System::Componen
 }
 private: System::Void OnExportComplete(System::Object^  sender, System::ComponentModel::RunWorkerCompletedEventArgs^  e) {
 	progressBar1->Value = 0;
+}
+private: System::Void VulkanUpdate(System::Object^ sender, System::ComponentModel::DoWorkEventArgs^ e) {
+
 }
 };
 }
