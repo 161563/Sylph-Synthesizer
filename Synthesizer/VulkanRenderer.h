@@ -36,6 +36,8 @@ namespace renderer
 			uint32_t swapchain_image_count;
 			std::vector<VkImage> swapchain_images;
 			std::vector<VkImageView> swapchain_image_views;
+
+			VkCommandPool graphics_command_pool;
 		};
 
 	}

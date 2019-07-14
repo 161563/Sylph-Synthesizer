@@ -4,6 +4,8 @@
 
 #include <vulkan/vulkan_win32.h>
 
+#include <string>
+
 using namespace System::Windows::Forms;
 
 namespace renderer
@@ -139,10 +141,23 @@ namespace renderer
 					MessageBox::Show(L"[ERROR] Creating swapchain image views failed", L"Sylph Synthesizer - Graphics Error");
 				}
 			}
+
+			VkCommandPoolCreateInfo graphics_command_pool_create_info = {};
+			graphics_command_pool_create_info.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
+			graphics_command_pool_create_info.queueFamilyIndex = physical_device->GetQueueFamilies().graphics;
+			graphics_command_pool_create_info.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
+
+			VkResult res = vkCreateCommandPool(logical_device->GetDevice(), &graphics_command_pool_create_info, nullptr, &graphics_command_pool);
+			if (res != VK_SUCCESS) {
+				std::string s = "[ERROR] [CODE:" + std::to_string(res) + "] Graphics command pool creation failed";
+				System::String^ out = gcnew System::String(s.c_str());
+				MessageBox::Show(out, L"Sylph Synthesizer - Graphics Error");
+			}
 		}
 
 		VulkanRenderer::~VulkanRenderer()
 		{
+			vkDestroyCommandPool(logical_device->GetDevice(), graphics_command_pool, nullptr);
 			for (auto& image_view : swapchain_image_views)
 			{
 				vkDestroyImageView(logical_device->GetDevice(), image_view, nullptr);
